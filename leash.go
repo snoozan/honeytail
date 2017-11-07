@@ -456,7 +456,7 @@ func sendEvent(ev event.Event) {
 		// drop the event!
 		logrus.WithFields(logrus.Fields{
 			"event": ev,
-		}).Debug("droppped event due to sampling")
+		}).Debug("Skipped: dropped event due to sampling")
 		return
 	}
 	libhEv := libhoney.NewEvent()
@@ -501,7 +501,6 @@ func handleResponses(responses chan libhoney.Response, stats *responseStats,
 		} else {
 			logfields["retry_send"] = false
 		}
-		logrus.WithFields(logfields).Debug("event send record received")
 	}
 }
 

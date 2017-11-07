@@ -78,10 +78,6 @@ func (p *Parser) ProcessLines(lines <-chan string, send chan<- event.Event, pref
 		wg.Add(1)
 		go func() {
 			for line := range lines {
-				logrus.WithFields(logrus.Fields{
-					"line": line,
-				}).Debug("Attempting to process keyval log line")
-
 				// if matching regex is set, filter lines here
 				if p.filterRegex != nil {
 					matched := p.filterRegex.MatchString(line)
@@ -90,7 +86,7 @@ func (p *Parser) ProcessLines(lines <-chan string, send chan<- event.Event, pref
 						logrus.WithFields(logrus.Fields{
 							"line":    line,
 							"matched": matched,
-						}).Debug("skipping line due to FilterMatch.")
+						}).Debug("Skipped: due to provided filter_regex")
 						continue
 					}
 				}
@@ -109,7 +105,7 @@ func (p *Parser) ProcessLines(lines <-chan string, send chan<- event.Event, pref
 					logrus.WithFields(logrus.Fields{
 						"line":  line,
 						"error": err,
-					}).Debug("skipping line; failed to parse.")
+					}).Debug("Skipped: log line failed to parse")
 					continue
 				}
 				if len(parsedLine) == 0 {
@@ -117,7 +113,7 @@ func (p *Parser) ProcessLines(lines <-chan string, send chan<- event.Event, pref
 					logrus.WithFields(logrus.Fields{
 						"line":  line,
 						"error": err,
-					}).Debug("skipping line; no key/val pairs found.")
+					}).Debug("Skipped: no key/val pairs found")
 					continue
 				}
 				if allEmpty(parsedLine) {
@@ -126,7 +122,7 @@ func (p *Parser) ProcessLines(lines <-chan string, send chan<- event.Event, pref
 					logrus.WithFields(logrus.Fields{
 						"line":  line,
 						"error": err,
-					}).Debug("skipping line; all values are the empty string.")
+					}).Debug("Skipped: all values are the empty string")
 					continue
 				}
 				// merge the prefix fields and the parsed line contents
@@ -136,6 +132,12 @@ func (p *Parser) ProcessLines(lines <-chan string, send chan<- event.Event, pref
 
 				// look for the timestamp in any of the prefix fields or regular content
 				timestamp := httime.GetTimestamp(parsedLine, p.conf.TimeFieldName, p.conf.TimeFieldFormat)
+
+				logrus.WithFields(logrus.Fields{
+					"line":      line,
+					"values":    parsedLine,
+					"timestamp": timestamp,
+				}).Debug("Success: parsed line")
 
 				// send an event to Transmission
 				e := event.Event{
