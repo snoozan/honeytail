@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
@@ -168,8 +169,8 @@ func main() {
 	addParserDefaultOptions(&options)
 	sanityCheckOptions(&options)
 
-	verifyWritekey(options.APIHost, options.Reqs.WriteKey)
-	run(options)
+	teamSlug := verifyWritekey(options.APIHost, options.Reqs.WriteKey)
+	run(options, teamSlug)
 }
 
 // setVersion sets the internal version ID and updates libhoney's user-agent
@@ -320,7 +321,7 @@ honeytail --help
 
 // verifyWritekey calls out to api to validate the writekey, so we can exit
 // immediately instead of happily sending events that are all rejected.
-func verifyWritekey(apiHost string, writeKey string) {
+func verifyWritekey(apiHost string, writeKey string) string {
 	url := fmt.Sprintf("%s/1/team_slug", apiHost)
 	req, err := http.NewRequest("GET", url, nil)
 	req.Header.Set("User-Agent", libhoney.UserAgentAddition)
@@ -334,11 +335,16 @@ func verifyWritekey(apiHost string, writeKey string) {
 		os.Exit(1)
 	}
 	defer resp.Body.Close()
+	body, _ := ioutil.ReadAll(resp.Body)
 	if resp.StatusCode != 200 {
-		body, _ := ioutil.ReadAll(resp.Body)
 		fmt.Println("Failed to validate your writekey:")
 		fmt.Println("\t", string(body))
 		fmt.Println("Sorry! Please try again.")
 		os.Exit(1)
 	}
+	ret := map[string]string{}
+	if err := json.Unmarshal(body, &ret); err != nil {
+		return ""
+	}
+	return ret["team_slug"]
 }
