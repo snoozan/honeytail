@@ -1,6 +1,7 @@
 package keyval
 
 import (
+	"context"
 	"reflect"
 	"regexp"
 	"sync"
@@ -148,7 +149,7 @@ func TestFilterRegex(t *testing.T) {
 			}
 			wg.Done()
 		}()
-		p.ProcessLines(lines, send, nil)
+		p.ProcessLines(context.TODO(), lines, send, nil)
 		close(send)
 		wg.Wait()
 	}
@@ -183,7 +184,7 @@ func TestDontReturnEmptyEvents(t *testing.T) {
 		}
 		wg.Done()
 	}()
-	p.ProcessLines(lines, send, nil)
+	p.ProcessLines(context.TODO(), lines, send, nil)
 	close(send)
 	wg.Wait()
 }
@@ -221,7 +222,7 @@ func TestDontReturnUselessEvents(t *testing.T) {
 		}
 		wg.Done()
 	}()
-	p.ProcessLines(lines, send, nil)
+	p.ProcessLines(context.TODO(), lines, send, nil)
 	close(send)
 	wg.Wait()
 }
